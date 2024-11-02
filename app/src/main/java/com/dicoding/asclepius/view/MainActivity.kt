@@ -67,7 +67,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun moveToResult(result: String, confidenceScore: Int) {
-        // Memindahkan hasil analisa ke ResultActivity.
         val intent = Intent(this, ResultActivity::class.java).apply {
             putExtra("RESULT", result)
             putExtra("CONFIDENCE_SCORE", confidenceScore)
