@@ -1,7 +1,6 @@
 package com.dicoding.asclepius.view
 
 import android.content.Intent
-import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -9,11 +8,13 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import com.dicoding.asclepius.databinding.ActivityMainBinding
 import com.dicoding.asclepius.helper.ImageClassifierHelper
+import androidx.activity.viewModels
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var imageClassifier: ImageClassifierHelper
-    private var currentImageUri: Uri? = null
+    private val imageViewModel: ImageViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,10 +29,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.analyzeButton.setOnClickListener {
-            if (currentImageUri != null) {
+            if (imageViewModel.imageUri.value != null) {
                 analyzeImage()
             } else {
                 showToast("Silakan pilih gambar terlebih dahulu.")
+            }
+        }
+
+        imageViewModel.imageUri.observe(this) { uri ->
+            uri?.let {
+                binding.previewImageView.setImageURI(it)
             }
         }
     }
@@ -45,21 +52,14 @@ class MainActivity : AppCompatActivity() {
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             val data = result.data
-            currentImageUri = data?.data
-            showImage()
-        }
-    }
-
-    private fun showImage() {
-        // TODO: Menampilkan gambar sesuai Gallery yang dipilih.
-        currentImageUri?.let {
-            binding.previewImageView.setImageURI(it)
+            val selectedImageUri = data?.data
+            imageViewModel.setImageUri(selectedImageUri)
         }
     }
 
     private fun analyzeImage() {
         // TODO: Menganalisa gambar yang berhasil ditampilkan.
-        currentImageUri?.let { uri ->
+        imageViewModel.imageUri.value?.let { uri ->
             val (result, confidenceScore) = imageClassifier.classifyStaticImage(uri)
             showToast("Hasil: $result dengan confidence score: $confidenceScore%")
             moveToResult(result, confidenceScore)
@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, ResultActivity::class.java).apply {
             putExtra("RESULT", result)
             putExtra("CONFIDENCE_SCORE", confidenceScore)
-            putExtra("IMAGE_URI", currentImageUri.toString())
+            putExtra("IMAGE_URI", imageViewModel.imageUri.value.toString())
         }
         startActivity(intent)
     }

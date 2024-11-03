@@ -10,7 +10,6 @@ import java.io.InputStream
 
 
 class ImageClassifierHelper(private val context: Context) {
-
     private lateinit var model: CancerClassification
 
     fun setupImageClassifier() {
